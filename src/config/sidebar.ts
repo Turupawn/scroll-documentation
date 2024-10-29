@@ -40,9 +40,19 @@ export const getSidebar = () => {
           },
           {
             title: t("sidebar.gettingStarted.scrollSepoliaBlockExplorer"),
-            url: "https://sepolia-blockscout.scroll.io/",
+            url: "https://sepolia.scrollscan.com/",
           },
           { title: t("sidebar.gettingStarted.sepoliaBlockExplorer"), url: "https://sepolia.etherscan.io/" },
+          { title: t("sidebar.gettingStarted.rollupExplorer"), url: "https://sepolia.scroll.io/rollupscan" },
+        ],
+      },
+      {
+        section: t("sidebar.gettingStarted.scrollMainnet"),
+        contents: [
+          {
+            title: t("sidebar.gettingStarted.scrollscan"),
+            url: "https://scrollscan.com/",
+          },
           { title: t("sidebar.gettingStarted.rollupExplorer"), url: "https://scroll.io/rollupscan" },
         ],
       },
@@ -122,6 +132,10 @@ export const getSidebar = () => {
             //   },
             // ],
           },
+          {
+            title: t("sidebar.developers.toolingDeployedOnScroll"),
+            url: formatUrl("developers/tooling-deployed-on-scroll"),
+          },
         ],
       },
       {
@@ -139,6 +153,10 @@ export const getSidebar = () => {
             title: t("sidebar.developers.bridgingERC20TokenThroughCustomGateway"),
             url: formatUrl("developers/guides/bridge-erc20-through-the-custom-gateway"),
           },
+          {
+            title: t("sidebar.developers.runningNode"),
+            url: formatUrl("developers/guides/running-a-scroll-node"),
+          },
           // {
           //   title: t("sidebar.developers.bridgingERC721NftThroughCustomGateway"),
           //   url: formatUrl("developers/guides/"),
@@ -154,18 +172,30 @@ export const getSidebar = () => {
         ],
       },
       {
-        section: t("sidebar.developers.resources"),
+        section: t("sidebar.developers.mainnetResources"),
         contents: [
           { title: t("sidebar.developers.rollupExplorer"), url: "https://scroll.io/rollupscan" },
-          { title: t("sidebar.developers.scrollSepoliaBlockExplorer"), url: "https://sepolia-blockscout.scroll.io/" },
-          { title: t("sidebar.developers.sepoliaBlockExplorer"), url: "https://sepolia.etherscan.io/" },
+          { title: t("sidebar.developers.scrollBlockExplorer"), url: "https://scrollscan.com/" },
+        ],
+      },
+      {
+        section: t("sidebar.developers.sepoliaResources"),
+        contents: [
+          { title: t("sidebar.developers.sepoliaRollupExplorer"), url: "https://sepolia.scroll.io/rollupscan" },
+          { title: t("sidebar.developers.scrollSepoliaBlockExplorer"), url: "https://sepolia.scrollscan.dev/" },
         ],
       },
     ],
     technology: [
       {
         section: t("sidebar.technology.overview"),
-        contents: [{ title: t("sidebar.technology.scrollArchitecture"), url: formatUrl("technology") }],
+        contents: [
+          { title: t("sidebar.technology.scrollArchitecture"), url: formatUrl("technology") },
+          {
+            title: t("sidebar.technology.scrollUpgrades"),
+            url: "technology/overview/scroll-upgrades",
+          },
+        ],
       },
       {
         section: t("sidebar.technology.scrollChain"),
@@ -252,6 +282,23 @@ export const getSidebar = () => {
           },
         ],
       },
+      {
+        section: t("sidebar.technology.security"),
+        contents: [
+          {
+            title: t("sidebar.technology.auditsAndBugBounty"),
+            url: formatUrl("technology/security/audits-and-bug-bounty"),
+          },
+          // {
+          //   title: t("sidebar.technology.risks"),
+          //   url: formatUrl("technology/security/risks"),
+          // },
+          // {
+          //   title: t("sidebar.technology.l2BeatAssessment"),
+          //   url: "https://l2beat.com/scaling/projects/scroll",
+          // },
+        ],
+      },
     ],
     learn: [
       {
@@ -286,6 +333,71 @@ export const getSidebar = () => {
             title: t("sidebar.learn.additionalResources"),
             url: formatUrl("learn/zero-knowledge/additional-zk-learning-resources"),
           },
+        ],
+      },
+    ],
+    sdk: [
+      {
+        section: t("sidebar.sdk.overview"),
+        contents: [
+          {
+            title: t("sidebar.sdk.scrollSdk"),
+            url: "sdk/",
+          },
+          {
+            title: t("sidebar.sdk.earlyAccessProgram"),
+            url: "sdk/early-access-program",
+          },
+        ],
+      },
+      {
+        section: t("sidebar.sdk.technicalStack"),
+        contents: [
+          {
+            title: t("sidebar.sdk.stackOverview"),
+            url: formatUrl("sdk/technical-stack/"),
+          },
+          {
+            title: t("sidebar.sdk.configuration"),
+            url: formatUrl("sdk/technical-stack/configuration"),
+          },
+          {
+            title: t("sidebar.sdk.services"),
+            url: formatUrl("sdk/technical-stack/services"),
+          },
+          {
+            title: t("sidebar.sdk.smartContracts"),
+            url: formatUrl("sdk/technical-stack/contracts"),
+          },
+          {
+            title: t("sidebar.sdk.proofGeneration"),
+            url: formatUrl("sdk/technical-stack/proof-generation"),
+          },
+        ],
+      },
+      {
+        section: t("sidebar.sdk.guides"),
+        contents: [
+          {
+            title: t("sidebar.sdk.devnetDeployment"),
+            url: formatUrl("sdk/guides/devnet-deployment"),
+          },
+          {
+            title: t("sidebar.sdk.productionDeployment"),
+            url: formatUrl("sdk/guides/production-deployment"),
+          },
+          {
+            title: t("sidebar.sdk.digitalOcean"),
+            url: formatUrl("sdk/guides/digital-ocean-alt-gas-token"),
+          },
+          {
+            title: t("sidebar.sdk.awsDeployment"),
+            url: formatUrl("sdk/guides/aws-deployment"),
+          },
+          // {
+          //   title: t("sidebar.sdk.runOnArm64Mac"),
+          //   url: formatUrl("sdk/guides/run-on-arm64-mac"),
+          // },
         ],
       },
     ],
