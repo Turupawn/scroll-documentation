@@ -1,0 +1,391 @@
+---
+section: sdk
+date: Last Modified
+title: "Running Scroll SDK Devnet Linux"
+lang: "en"
+permalink: "sdk/guides/devnet-deploymnet"
+excerpt: "Run the Scroll SDK devnet locally to get started."
+---
+
+import Aside from "../../../../../components/Aside.astro"
+import ToggleElement from "../../../../../components/ToggleElement.astro"
+import Steps from '../../../../../components/Steps/Steps.astro';
+
+
+## Overview test
+
+This guide should get you started with running a local Scroll SDK devnet on Debian based Linux distributions, tested on Ubuntu 24.04. 
+
+This guide assumes you have access to the [scroll-sdk github repo](https://github.com/scroll-tech/scroll-sdk) using your local machine.
+
+We’ve written this guide because local deployments for Kubernetes clusters can be finicky.
+
+By the end of the guide, you should have a Scroll SDK running with a block explorer, RPC, webUI, monitoring and metrics, and a local L1. These are all accessible to wallets, browsers, and applications running on your local machine.
+
+<Aside type="caution">
+This guide is for Debian based distributions and has been tested with Ubuntu 24.04. MacOS is also supported (refer to the specific MacOS guide). Other Linux distributions, like Red Hat based systems, should work with minor adjustments.
+</Aside>
+
+<Aside type="caution">
+This guide does not include running the coordinator or a prover. The coordinator currently requires 20GB of RAM to run, so we disable it by default, and provers need dedicated machines to run and require additional configuration.
+</Aside>
+
+<ToggleElement anchor="Guide Updates">
+  <div slot="title">Updates to the Guide</div>
+  <span>
+
+  - August 26, 2024
+    - Changes for repository refactor, including new CLI tool commands.
+  - July 31, 2024
+    - Adding additional `make` commands and `minikube` config
+  - June 26, 2024
+    - Minor typography fixes i.e. `docker v` to `docker -v`
+  - June 19, 2024
+    - Removed external `bjw-s` dependency and prerequisite
+    - Removed manual modification of `.env.frontends`
+    - Updated docker image name used in generating config files
+  - June 18, 2024
+    - Fixed `minikube addons enable` commands (missing “addons”)
+
+  </span>
+</ToggleElement>
+
+## Prerequisites
+<Steps>
+1. Install dependencies (using `brew` is strongly recommended):
+- [Make](https://www.gnu.org/software/make/)
+```bash
+sudo apt-get install make
+```
+- Docker ([Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/))
+```bash
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+# Install docker
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+```
+- [minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download)
+```bash
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
+```
+- [Helm](https://helm.sh/docs/intro/install/)
+```bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+```
+2. *Optional:* Install dependencies for support CLI tool:
+- [node >=18](https://nodejs.org/en/download/package-manager)
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+```
+Now relog the terminal to update the environment.
+```bash
+nvm install 20
+```
+- scroll-sdk-cli *(Experimental, APIs may change)*
+```bash
+npm install -g scroll-sdk-cli
+```
+3. You should now be able to open a terminal and run the following:
+    - `docker -v`
+    - `kubectl version`
+    - `minikube status`
+    - `helm version`
+    - `node -v`
+    - `scrollsdk`
+    - Or, in one step: `scrollsdk test dependencies`
+
+</Steps>
+
+<Aside type="tip" note="Setting Default Resources for `minikube`">
+By default, minikube is allocated 2 CPU and 4GB RAM. For best performance, you can set higher resource limits before starting minikube.
+
+```bash
+minikube config set cpus 8
+minikube config set memory 8192
+```
+
+</Aside>
+
+### Starting minikube
+
+Add your user to the docker group:
+
+```bash
+sudo usermod -aG docker $USER && newgrp docker
+```
+
+To start minikube, run:
+
+```bash
+minikube start --driver=docker
+minikube addons enable ingress
+minikube addons enable ingress-dns
+```
+
+#### Getting minikube to work with custom DNS names on Linux
+
+Find out what your IP address is with the following command.
+
+```bash
+minikube ip
+```
+
+Now add the following to your `/etc/hosts` file, replace `192.168.49.2` with your minikube IP returned by the previous command.
+
+```
+192.168.49.2 l1-devnet.scrollsdk
+192.168.49.2 bridge-history.scrollsdk
+192.168.49.2 frontends.scrollsdk
+192.168.49.2 grafana.scrollsdk
+192.168.49.2 l1-devnet-explorer.scrollsdk
+192.168.49.2 l2-rpc.scrollsdk
+192.168.49.2 blockscout.scrollsdk
+192.168.49.2 bridge-history-api.scrollsdk
+192.168.49.2 rollup-explorer-backend.scrollsdk
+192.168.49.2 l2-rpc-ws.scrollsdk
+192.168.49.2 l1-explorer.scrollsdk
+192.168.49.2 admin-system-dashboard.scrollsdk
+```
+
+## Installing Scroll SDK
+
+<Aside type="caution">
+To grab charts from the private repo, you'll need to setup a legacy GitHub [personal access token](https://github.com/settings/tokens) with read access to the repo.
+
+Then, set it as a env var and run: `echo $GHCR_PAT | docker login ghcr.io -u [github username] --password-stdin`
+</Aside>
+
+
+<Steps>
+1. **Clone the `scroll-sdk` repo and find `devnet` directory**
+
+    *You’ll need If you need repo access, reach out to `@dghelm` on Telegram.*
+
+    ```bash
+    git clone git@github.com:scroll-tech/scroll-sdk.git
+    cd scroll-sdk/devnet
+    ```
+
+1. **Bootstrap**
+
+    Now we'll install Helm chart dependencies, generate additional config files for our services, and create our `genesis.json` file.
+
+    ```bash
+    make bootstrap
+    ```
+
+    <Aside note="caution" title="Command changes frequently!">
+    The behavior of this command can change frequently since it refers to a specific docker image. Be sure to keep your repo up to date.
+    </Aside>
+
+1. Optional: **Configure `values.yaml` and `config.toml`**
+
+    This is the time to adjust what services run on your stack and their configuration. I’d suggest not altering these on your first installation, but see `charts/scroll-sdk/values.yaml` ([view on Github](https://github.com/scroll-tech/scroll-sdk/blob/develop/charts/scroll-sdk/values.yaml)) and `config.toml` ([view on Github](https://github.com/scroll-tech/scroll-sdk/blob/develop/charts/scroll-sdk/config.toml)).
+
+    If you do make changes, you’ll need to run `make config` to regenerate the additional configuration files.
+
+
+1. **Launch the chain!**
+
+    ```bash
+    make install
+    ```
+
+    Your chain is now starting! Run `kubectl get pods` to check in on their progress. In the next section we’ll expose the chain to your local machine so you can interact with the stack.
+
+    <Aside>
+    The whole start process for the various containers can take up to  minutes.
+    </Aside>
+</Steps>
+
+<Aside>
+In Devnet, we'll work inside the `scroll-sdk` repo folder. This is not the recommended method for production deployments.
+</Aside>
+
+## After Launching the Stack
+
+### Funding SDK Addresses
+
+You will need to provide funds to the following accounts:
+
+  - `DEPLOYER_ADDR` *(only needs funded on L1)*
+    - In the default configuration, this account is pre-funded by Anvil. If changed, you'll need to relaunch the contracts pod after funding to deploy the contracts.
+  - `L1_COMMIT_SENDER_ADDR`
+  - `L1_FINALIZE_SENDER_ADDR`
+  - `L1_GAS_ORACLE_SENDER_ADDR`
+  - `L2_GAS_ORACLE_SENDER_ADDR` *(funded after L2 chain deployment)*
+
+If you installed the necessary prerequisites, you can run the cli helper command. (Note: this command only works for L1 accounts)
+
+```bash
+cd scroll-sdk
+scrollsdk helper fund-accounts --dev
+```
+
+### Other Useful Commands
+
+`kubectl get pods` will show all the active pods and their status.
+
+`kubectl get ingress` will show all the exposed services and URIs.
+
+`make delete` will stop all services. You wil also need to run `kubectl delete pvc data-l2-rpc-0` to delete the remaining pvc.
+
+`minikube dashboard` launches a WebUI for exploring the kubernetes cluster and the various pods, volumes and ingresses without learning all the CLI commands. `k9s` is also a CLI great tool for exploring running pods and quickly looking at their logs.
+
+If you need to update a specific service's config file:
+  1. Make any necessary changes to the config or helm charts
+  2. Run `make install`
+  3. Delete the running pod by running `kubectl delete pod [pod-name]`
+
+#### Testing Ingress DNS
+
+Try running:
+
+1.  `nslookup frontends.scrollsdk $(minikube ip)`
+2.  `curl frontends.scrollsdk`
+3.  If those work, visit [`http://frontends.scrollsdk`](http://frontends.scrollsdk) in your browser.
+
+## Testing & Interacting with the Chain
+
+### scroll-sdk-CLI
+
+The scroll-sdk-cli tool has many helper commands. Run it in the same directory as your `config.toml` file in the `./devnet/scroll-sdk` folder.
+
+- `scrollsdk test ingress` will test if your ingress is configured correctly and host urls are accessible from your machine.
+- `scrollsdk test contracts` will check that essential contracts are deployed, initialized and have the correct owner.
+- `scrollsdk helper fund-accounts --dev -a [account-address]` will fund any account.
+- `scrollsdk helper activity -o -t` will generate activity on both layer one and layer two to help produce blocks and batches.
+
+#### End-To-End Test
+
+The `scrollsdk test e2e` command will walk you through generating the following tests on your chain:
+
+- Generate a new wallet
+- Fund it from the Deployer address on L1
+- Deposit funds to the L2
+- Deploying an ERC20 and depositing them to the L2
+- Deploying an ERC20 on the L2
+- Bridging ETH and ERC20 from L2 back to L1
+- Executing the withdrawal claim on L1
+
+If any step fails, you can restart where you left off by adding the `--resume` flag.
+
+<Aside>
+We recommend running `scrollsdk helper activity` in another terminal to generate traffic on the chain while running the end-to-end test. This will keep blocks being produced, which is needed for bridging transactions, gas oracle updates and batch submission and finalization.
+</Aside>
+
+
+### Web UIs
+
+You should now be able to explore the stack on your local machine and using your web browser. All links below assume default configuration and working Ingress DNS.
+
+- Block Explorers (Blockscout)
+  - [L2 Explorer](http://blockscout.scrollsdk/)
+  - [L1 Explorer](http://l1-devnet-explorer.scrollsdk/) (this is scanning Anvil and can be a bit buggy)
+- [Bridge](http://frontends.scrollsdk/bridge)
+  - Until some activity on the network has started, gas errors may occur.
+- [Rollup Explorer](http://frontends.scrollsdk/rollupscan?page=1&per_page=10)
+  - Shows committed batches and finalized batches
+- [Granfana Dashboards](http://grafana.scrollsdk/)
+  - Login
+    - User: `admin`
+    - Pass: `scroll-sdk`
+  - See “Scroll” dashboards on [this page](http://grafana.scrollsdk/dashboards).
+
+### Connecting to the RPC using a Wallet
+
+To connect directly to an RPC or using MetaMask, use:
+
+| Network | Scroll SDK Chain | Scroll SDK L1 |
+|-------------|-------------|-------------|
+| RPC URL | `http://l2-rpc.scrollsdk` | `http://l1-devnet.scrollsdk` |
+| Chain ID | `221122` | `111111` |
+| Currency Symbol | `ETH` | `ETH` |
+| Block Explorer URL | [`http://blockscout.scrollsdk`](http://blockscout.scrollsdk/) | [`http://l1-devnet-explorer.scrollsdk`](http://l1-devnet-explorer.scrollsdk/) |
+
+<Aside type="caution">
+Until we setup `https` you need to manually set these up in MetaMask and the WebUI buttons will not work.
+</Aside>
+
+### Helpful Commands
+
+Anvil has a lot of [useful methods](https://book.getfoundry.sh/reference/anvil/#custom-methods) that can manipulate the L1. Proper documentation for using them is available in the [Hardhat docs](https://hardhat.org/hardhat-network/docs/reference#hardhat-network-methods) (replacing `hardhat_` with `anvil_`)
+
+#### Set L1 Token Balance of an Account
+
+In params, change first item to a wallet, and second to hex of wei. This config uses 1000 ETH.
+
+See [docs](https://hardhat.org/hardhat-network/docs/reference#hardhat_setbalance) for details.
+
+```bash
+curl --location 'http://l1-devnet.scrollsdk/' \
+--header 'Content-Type: application/json' \
+--data '{
+	"jsonrpc":"2.0",
+	"method":"anvil_setBalance",
+	"params":["0x98110937b5D6C5FCB0BA99480e585D2364e9809C","0x3635C9ADC5DEA00000"],
+	"id":0
+}'
+```
+
+#### Mine some L1 Block
+
+See [docs](https://hardhat.org/hardhat-network/docs/reference#hardhat_mine) for details.
+
+```bash
+curl --location 'http://l1-devnet.scrollsdk/' \
+--header 'Content-Type: application/json' \
+--data '{
+	"jsonrpc":"2.0",
+	"method":"anvil_mine",
+	"params":["0x10000000", "0xc"],
+	"id":0
+}'
+```
+
+## Troubleshooting
+
+### `ingress-dns` issues
+
+Getting `ingress-dns` can be tricky across different machines, operating systems and network configurations. 
+
+**Directly editing `etc/hosts` has worked for some users, adding all ingress hosts pointing to the minikube IP address.**
+
+Follow the template below, being sure to create one value for every ingress in your configuration. Also, be sure to try the IP of your minikube deployment.
+
+For VPN users, we've seen the following work:
+
+<Steps>
+1. Execute command `sudo minikube tunnel`
+
+1. Open file `/etc/hosts` and add:
+    ```
+    127.0.0.1 l1-devnet.scrollsdk
+    127.0.0.1 bridge-history.scrollsdk
+    127.0.0.1 frontends.scrollsdk
+    127.0.0.1 grafana.scrollsdk
+    127.0.0.1 l1-devnet-explorer.scrollsdk
+    127.0.0.1 l2-rpc.scrollsdk
+    127.0.0.1 blockscout.scrollsdk
+    127.0.0.1 bridge-history-api.scrollsdk
+    ```
+
+1. Turn off VPN when visiting in browser
+</Steps>
